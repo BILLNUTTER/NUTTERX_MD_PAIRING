@@ -1,0 +1,14 @@
+{
+  "name": "nutterx-pairing",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "express": "^4.21.0",
+    "pino": "^9.5.0",
+    "qrcode": "^1.5.4"
+  }
+}
