@@ -5,7 +5,7 @@ WhatsApp Multi-Device Pairing Bot
 A simple WhatsApp pairing system powered by Node.js and Baileys.
 
 <p align="center">
-<a href="https://nutterx-md-pairing1-0b88af810b26.herokuapp.com/">
+<a href="https://nutterx-md-pairing-7092d0b8e236.herokuapp.com/">
 <img src="https://img.shields.io/badge/PAIR_WHATSAPP-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Pair WhatsApp"/>
 </a>
 <a href="https://github.com/BILLNUTTER/NUTTERX-MD">
