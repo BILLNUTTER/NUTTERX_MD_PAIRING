@@ -212,13 +212,69 @@
       to { transform: rotate(360deg); }
     }
 
+    /* PAIRING CODE + COPY ICON */
+
+    .code-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 8px 0;
+      padding: 8px;
+      background: rgba(37,211,102,.045);
+      border: 1px solid rgba(37,211,102,.13);
+      border-radius: 12px;
+    }
+
     .code {
       color: var(--green);
       font-size: 27px;
       font-weight: 900;
       letter-spacing: 5px;
-      padding: 17px 5px;
+      padding: 10px 0;
       overflow-wrap: anywhere;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .code-copy-btn {
+      width: 43px;
+      height: 43px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: var(--panel2);
+      color: var(--green);
+      border: 1px solid rgba(37,211,102,.25);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .code-copy-btn:hover {
+      background: var(--green);
+      color: #06140b;
+      transform: scale(1.06);
+    }
+
+    .code-copy-btn:active {
+      transform: scale(.94);
+    }
+
+    .code-copy-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .code-copy-btn.copied {
+      background: var(--green);
+      color: #06140b;
+      border-color: var(--green);
     }
 
     .qr-wrap img {
@@ -321,6 +377,8 @@
       .card { padding: 18px; }
       .brand h1 { font-size: 24px; }
       .buttons { grid-template-columns: 1fr; }
+      .code { font-size: 23px; letter-spacing: 3px; }
+      .code-container { gap: 7px; }
     }
   </style>
 </head>
@@ -422,6 +480,91 @@
   }
 
   // ==========================================
+  // CLIPBOARD HELPER
+  // ==========================================
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '0';
+
+    document.body.appendChild(textarea);
+
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    const successful = document.execCommand('copy');
+
+    textarea.remove();
+
+    if (!successful) {
+      throw new Error('Clipboard copy failed');
+    }
+  }
+
+  // ==========================================
+  // COPY PAIRING CODE
+  // ==========================================
+
+  async function copyPairingCode() {
+    const codeElement = document.getElementById('pairingCode');
+    const button = document.getElementById('copyCodeBtn');
+
+    if (!codeElement || !button) return;
+
+    const code = codeElement.textContent.trim();
+
+    if (!code) {
+      showToast('No pairing code available.');
+      return;
+    }
+
+    try {
+      await copyText(code);
+
+      button.classList.add('copied');
+      button.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12l5 5L20 7"></path>
+        </svg>
+      `;
+
+      button.setAttribute('aria-label', 'Pairing code copied');
+      button.title = 'Copied!';
+
+      showToast('Pairing code copied successfully!');
+
+      setTimeout(() => {
+        if (!button.isConnected) return;
+
+        button.classList.remove('copied');
+
+        button.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="8" y="8" width="13" height="13" rx="2"></rect>
+            <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        `;
+
+        button.setAttribute('aria-label', 'Copy pairing code');
+        button.title = 'Copy code';
+      }, 1800);
+
+    } catch (error) {
+      showToast('Copy failed. Please select the code and copy it manually.');
+    }
+  }
+
+  // ==========================================
   // POLLING MANAGEMENT
   // ==========================================
 
@@ -494,7 +637,31 @@
     result.innerHTML = `
       <div class="panel">
         <h3>Enter this code on your phone</h3>
-        <p class="code" id="pairingCode"></p>
+
+        <div class="code-container">
+
+          <p class="code" id="pairingCode"></p>
+
+          <button
+            class="code-copy-btn"
+            id="copyCodeBtn"
+            type="button"
+            onclick="copyPairingCode()"
+            aria-label="Copy pairing code"
+            title="Copy code"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="8" y="8" width="13" height="13" rx="2"></rect>
+              <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </button>
+
+        </div>
+
+        <p class="hint">
+          Tap the copy icon to copy your pairing code instantly.
+        </p>
+
         <p class="hint">
           Open WhatsApp → <strong>Linked Devices</strong> →
           <strong>Link with phone number</strong>,
@@ -617,17 +784,7 @@
     const text = input.value;
 
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        input.focus();
-        input.select();
-        input.setSelectionRange(0, text.length);
-
-        if (!document.execCommand('copy')) {
-          throw new Error('Clipboard copy failed');
-        }
-      }
+      await copyText(text);
 
       btn.textContent = 'Copied!';
       btn.classList.add('copied');
